@@ -1,9 +1,10 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
@@ -11,11 +12,15 @@ from django.db import transaction
 
 # Create your views here.
 class LandingPageAPIView(APIView):
+    permission_classes = [AllowAny] 
+
     def get(self, request):
         return Response({"message": "Welcome to your Grade Tracker!"}, status=status.HTTP_200_OK)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class SignUpAPIView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
         # Extract data from the request
         username = request.data.get('username')
@@ -50,6 +55,8 @@ class SignUpAPIView(APIView):
 
 @method_decorator(csrf_exempt, name='dispatch')
 class LogInAPIView(APIView):
+    permission_classes = [AllowAny]
+    
     def post(self, request):
         # Extract username and password from the request
         username = request.data.get('username')
@@ -67,3 +74,24 @@ class LogInAPIView(APIView):
             return Response({"message": "Login successful", "token": token.key}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+class DashboardAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        print(f"Headers: {request.headers}")  # Debug headers
+        print(f"Authenticated user: {request.user}")
+        print(f"User is authenticated: {request.user.is_authenticated}")
+        return Response({"username": request.user.username}, status=status.HTTP_200_OK)
+    
+class LogoutAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            # Delete the user's token
+            token = Token.objects.get(user=request.user)
+            token.delete()
+            return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+        except Token.DoesNotExist:
+            return Response({"error": "Token not found"}, status=status.HTTP_400_BAD_REQUEST)
