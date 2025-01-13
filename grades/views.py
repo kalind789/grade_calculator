@@ -5,38 +5,64 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.db import transaction
 
 # Create your views here.
 class LandingPageAPIView(APIView):
     def get(self, request):
-            return Response({"message": "Welcome to the Grade Tracker API!"}, status=status.HTTP_200_OK)
+        return Response({"message": "Welcome to your Grade Tracker!"}, status=status.HTTP_200_OK)
 
-class SingUpAPIView(APIView):
+@method_decorator(csrf_exempt, name='dispatch')
+class SignUpAPIView(APIView):
     def post(self, request):
-            username = request.data.get('username')
-            email = request.data.get('email')
-            password = request.data.get('password')
-            password2 = request.data.get('password2')
+        # Extract data from the request
+        username = request.data.get('username')
+        email = request.data.get('email')
+        password = request.data.get('password')
+        password2 = request.data.get('password2')
 
-            if password != password2:
-                return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if User.objects.filter(username=username).exists():
-                return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST) 
-            
-            user = User.objects.create_user(username=username, password=password, email=email)
-            token, created = Token.objects.get_or_create(user=user)
+        # Validate passwords
+        if password != password2:
+            return Response({"error": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"message": "User created successfully", "token": token.key}, status=status.HTTP_201_CREATED)
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            return Response({"error": "Email already exists"}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            # Use a transaction to ensure atomicity
+            with transaction.atomic():
+                # Create the user
+                user = User.objects.create_user(username=username, password=password, email=email)
+                token, created = Token.objects.get_or_create(user=user)
 
+                return Response({"message": "User created successfully", "token": token.key}, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            # Log the error and return an appropriate response
+            print(f"Error during signup: {e}")
+            return Response({"error": "An error occurred while creating the user"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@method_decorator(csrf_exempt, name='dispatch')
 class LogInAPIView(APIView):
     def post(self, request):
+        # Extract username and password from the request
         username = request.data.get('username')
         password = request.data.get('password')
 
+        # Validate inputs
+        if not username or not password:
+            return Response({"error": "Both username and password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Authenticate the user
         user = authenticate(username=username, password=password)
-        if user is not None:
+        if user:
+            # Generate or retrieve token
             token, created = Token.objects.get_or_create(user=user)
             return Response({"message": "Login successful", "token": token.key}, status=status.HTTP_200_OK)
         else:
