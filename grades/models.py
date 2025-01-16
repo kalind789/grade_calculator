@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+# Need a better commmit message lol
 
 # Class model
 class Class(models.Model):
