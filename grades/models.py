@@ -18,7 +18,6 @@ class Class(models.Model):
     def __str__(self):
         return self.class_name
 
-
 # AssignmentType (Section) model
 class AssignmentType(models.Model):
     class_instance = models.ForeignKey(

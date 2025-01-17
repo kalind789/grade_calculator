@@ -22,3 +22,6 @@ venv/
 
 # Database
 db.sqlite3
+
+# migrations
+grades/migrations/
