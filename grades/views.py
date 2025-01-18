@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework.generics import ListCreateAPIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -9,6 +10,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.db import transaction
+from .models import Class
+from .serializers import ClassSerializer
 
 # Create your views here.
 class LandingPageAPIView(APIView):
@@ -95,3 +98,13 @@ class LogoutAPIView(APIView):
             return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
         except Token.DoesNotExist:
             return Response({"error": "Token not found"}, status=status.HTTP_400_BAD_REQUEST)
+        
+class ClassListCreateAPIView(ListCreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = ClassSerializer
+
+    def get_queryset(self):
+        return Class.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

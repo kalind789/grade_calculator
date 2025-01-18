@@ -30,6 +30,7 @@ class ClassSerializer(serializers.ModelSerializer):
     class Meta:
         model = Class
         fields = ['id', 'class_name', 'class_semester', 'user', 'sections', 'total_grade']
+        read_only_fields = ['user']
 
     def get_total_grade(self, obj):
         return obj.calculate_total_grade()

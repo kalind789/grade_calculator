@@ -14,7 +14,7 @@ const LandingPage = () => {
     }
     const fetchMessage = async () => {
         try {
-            const res = await axios.get('http://127.0.0.1:8000/api/landing');
+            const res = await axios.get('http://127.0.0.1:8000/api/landing/');
             setMessage(res.data.message);
             console.log(message);
         } catch (err) {

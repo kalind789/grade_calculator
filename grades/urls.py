@@ -1,10 +1,13 @@
 from django.urls import path
-from .views import LandingPageAPIView, SignUpAPIView, LogInAPIView, DashboardAPIView, LogoutAPIView
+from .views import (
+    LandingPageAPIView, SignUpAPIView, LogInAPIView, DashboardAPIView, LogoutAPIView, ClassListCreateAPIView
+)
 
 urlpatterns = [
     path('landing/', LandingPageAPIView.as_view(), name='landing'),
     path('signup/', SignUpAPIView.as_view(), name='signup'),
     path('login/', LogInAPIView.as_view(), name='login'),
     path('dashboard/', DashboardAPIView.as_view(), name='dashboard'),
-    path('logout/', LogoutAPIView.as_view(), name='logout')
+    path('logout/', LogoutAPIView.as_view(), name='logout'),
+    path('classes/', ClassListCreateAPIView.as_view(), name='classes')
 ]
